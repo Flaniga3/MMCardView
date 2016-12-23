@@ -57,7 +57,7 @@ open class CardCell:UICollectionViewCell{
             self.addGestureRecognizer(pangesture!)
         }
         
-        self.setShadow(offset: CGSize(width: 0, height: -2), radius: 8, opacity: 0.5)
+        //self.setShadow(offset: CGSize(width: 0, height: -2), radius: 8, opacity: 0.5)
     }
 
     open override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
