@@ -16,7 +16,7 @@ public class CardView: UIView {
     public weak var cardDataSource:CardCollectionViewDataSource?
     
     fileprivate var isFilterMode = false
-
+    
     fileprivate var filterSet = [Int]()
     fileprivate var filterArr = [AnyObject]()
     fileprivate var cardArr = [AnyObject]() {
@@ -54,16 +54,16 @@ public class CardView: UIView {
         super.init(coder: aDecoder)
         self.setUp()
     }
-
+    
     public func set(cards:[AnyObject]) {
         cardArr.removeAll()
         cardArr += cards
     }
     
     public func filterAllDataWith(isInclued:@escaping (Int,AnyObject) -> Bool) {
-     
+        
         DispatchQueue.main.async {
-         
+            
             var removeIdx = [Int]()
             var insertIdx = [Int]()
             for (idx,value) in self.cardArr.enumerated() {
@@ -93,46 +93,46 @@ public class CardView: UIView {
                 
                 self.collectionView.performBatchUpdates({
                     self.collectionView.insertItems(at: insertPath)
+                }, completion: { (finish) in
+                    
+                    if self.filterArr.count == 1 {
+                        self.selectAt(index: 0)
+                    } else {
+                        self.selectAt(index: -1)
+                    }
+                    
+                    if insertIdx.count == 0 || !finish {
+                        return
+                    }
+                    add = add.enumerated().sorted(by: {$0.0.element < $0.1.element}).map {$0.element}
+                    let value:[(IndexPath,IndexPath)] = self.filterSet.enumerated().map {
+                        let from = IndexPath.init(row: $0.offset, section: 0)
+                        let to = IndexPath.init(row: add.index(of: $0.element)!, section: 0)
+                        return (from , to)
+                    }
+                    self.filterSet = add
+                    self.filterArr = add.map {self.cardArr[$0]}
+                    
+                    self.collectionView.performBatchUpdates({
+                        for (from,to) in value {
+                            
+                            self.collectionView.moveItem(at: from, to: to)
+                        }
+                        
                     }, completion: { (finish) in
                         
-                        if self.filterArr.count == 1 {
-                            self.selectAt(index: 0)
-                        } else {
-                            self.selectAt(index: -1)
-                        }
-
-                        if insertIdx.count == 0 || !finish {
-                            return
-                        }
-                        add = add.enumerated().sorted(by: {$0.0.element < $0.1.element}).map {$0.element}
-                        let value:[(IndexPath,IndexPath)] = self.filterSet.enumerated().map {
-                            let from = IndexPath.init(row: $0.offset, section: 0)
-                            let to = IndexPath.init(row: add.index(of: $0.element)!, section: 0)
-                            return (from , to)
-                        }
-                        self.filterSet = add
-                        self.filterArr = add.map {self.cardArr[$0]}
-
-                        self.collectionView.performBatchUpdates({
-                            for (from,to) in value {
-
-                                self.collectionView.moveItem(at: from, to: to)
-                            }
-
-                            }, completion: { (finish) in
-                                
-                                let sortsCell = self.collectionView.visibleCells.sorted(by: { (cell1, cell2) -> Bool in
-                                    let path1 = self.collectionView.indexPath(for: cell1)
-                                    let path2 = self.collectionView.indexPath(for: cell2)
-                                    return path1!.row < path2!.row
-                                })
-                                
-                                
-                                for (index,cell) in sortsCell.enumerated() {
-                                    cell.removeFromSuperview()
-                                    self.collectionView.insertSubview(cell, at: index)
-                                }                                
+                        let sortsCell = self.collectionView.visibleCells.sorted(by: { (cell1, cell2) -> Bool in
+                            let path1 = self.collectionView.indexPath(for: cell1)
+                            let path2 = self.collectionView.indexPath(for: cell2)
+                            return path1!.row < path2!.row
                         })
+                        
+                        
+                        for (index,cell) in sortsCell.enumerated() {
+                            cell.removeFromSuperview()
+                            self.collectionView.insertSubview(cell, at: index)
+                        }
+                    })
                 })
             }
         }
@@ -143,10 +143,10 @@ public class CardView: UIView {
     }
     
     public func showStyle(style:SequenceStyle) {
-        DispatchQueue.main.async { 
+        DispatchQueue.main.async {
             if let custom = self.collectionView.collectionViewLayout as? CustomCardLayout {
                 custom.showStyle = style
-            }            
+            }
         }
     }
     
@@ -155,13 +155,12 @@ public class CardView: UIView {
             print ("You need select a cell")
             return
         }
-
+        
         let current = UIViewController.currentViewController()
-        vc.transitioningDelegate = self
         vc.modalPresentationStyle = .custom
         current.present(vc, animated: true, completion: nil)
     }
-
+    
     public func registerCardCell(c:AnyClass,nib:UINib) {
         if (c.alloc().isKind(of: CardCell.classForCoder())) {
             let identifier = c.value(forKey: "cellIdentifier") as! String
@@ -177,10 +176,10 @@ public class CardView: UIView {
         }
     }
     
-    public func setCardTitleHeight(heihgt:CGFloat) {
+    public func setCardTitleHeight(height:CGFloat) {
         DispatchQueue.main.async {
             if let layout = self.collectionView.collectionViewLayout as? CustomCardLayout {
-                layout.titleHeight = heihgt
+                layout.titleHeight = height
             }
         }
     }
@@ -199,12 +198,12 @@ public class CardView: UIView {
             self.collectionView.performBatchUpdates({
                 self.filterArr.remove(at: index)
                 self.collectionView.deleteItems(at: [IndexPath.init(item: index, section: 0)])
-
+                
             }, completion: { (finish) in
                 if !finish {
                     return
                 }
-
+                
                 if let layout = self.collectionView.collectionViewLayout as? CustomCardLayout {
                     layout.selectIdx = -1
                 }
@@ -220,18 +219,16 @@ public class CardView: UIView {
         let idx = currentIdx()
         self.removeCard(at: idx)
     }
-
+    
     public func currentIdx() -> Int {
         if let custom = collectionView.collectionViewLayout as? CustomCardLayout {
-           return custom.selectIdx
+            return custom.selectIdx
         }
         return -1
     }
-
+    
     fileprivate func selectAt(index:Int) {
-        if let custom = collectionView.collectionViewLayout as? CustomCardLayout {
-            custom.selectIdx = index
-        }
+        
     }
 }
 
@@ -255,7 +252,7 @@ extension CardView:UICollectionViewDataSource {
         guard let source = cardDataSource?.cardView(collectionView: collectionView,item: filterArr[indexPath.row], indexPath: indexPath) as? CardCell else {
             return UICollectionViewCell()
         }
-//        source.transform = .identity
+        //        source.transform = .identity
         source.collectionV = collectionView
         source.reloadBlock = {
             if let custom = collectionView.collectionViewLayout as? CustomCardLayout {
@@ -264,25 +261,5 @@ extension CardView:UICollectionViewDataSource {
         }
         source.isHidden = false
         return source
-    }
-}
-
-extension CardView:UIViewControllerTransitioningDelegate{
-
-    public func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        transition.transitionMode = .Present
-        if let custom = collectionView.collectionViewLayout as? CustomCardLayout {
-            transition.cardView = self.collectionView.cellForItem(at: IndexPath.init(row: custom.selectIdx, section: 0))
-            custom.isFullScreen = true
-        }
-        return transition
-    }
-
-    public func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        transition.transitionMode = .Dismiss
-        if let custom = collectionView.collectionViewLayout as? CustomCardLayout {
-            custom.isFullScreen = false
-        }
-        return transition
     }
 }

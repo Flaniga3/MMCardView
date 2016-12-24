@@ -11,7 +11,7 @@ import UIKit
 extension UIView {
     
     func setShadow(offset:CGSize,radius:CGFloat,opacity:Float) {
-     
+        
         self.layer.masksToBounds = false
         self.layer.cornerRadius = radius
         self.layer.shadowOffset = offset

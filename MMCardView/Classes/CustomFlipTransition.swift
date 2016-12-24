@@ -35,7 +35,7 @@ public class CustomFlipTransition: NSObject,UIViewControllerAnimatedTransitionin
         let viewRadius = self.cardView.layer.cornerRadius
         
         if self.transitionMode == .Present {
-         
+            
             originalCardFrame = self.cardView.frame
             let toViewF = self.cardView.convert(self.cardView.superview!.frame, to: toView!)
             toView?.frame = self.cardView.bounds
@@ -44,18 +44,18 @@ public class CustomFlipTransition: NSObject,UIViewControllerAnimatedTransitionin
             self.blurView.frame = containerView.bounds
             self.blurView.alpha = 0.0
             containerView.addSubview(self.blurView)
-
+            
             UIView.transition(with: self.cardView, duration: 0.7, options: [.transitionFlipFromRight,.curveEaseIn], animations: {
                 self.cardView.frame = CGRect.init(x: self.originalCardFrame.origin.x, y: self.originalCardFrame.origin.y, width: toViewF.width, height: toViewF.height)
-                }, completion: { (finish) in
-                    UIView.animate(withDuration: 0.2, animations: {
-                        self.blurView.alpha = 1.0
-                    })
-                    
-                    toView?.frame = toViewF
-                    toView?.removeFromSuperview()
-                    containerView.addSubview(toView!)
-                    transitionContext.completeTransition(true)
+            }, completion: { (finish) in
+                UIView.animate(withDuration: 0.2, animations: {
+                    self.blurView.alpha = 1.0
+                })
+                
+                toView?.frame = toViewF
+                toView?.removeFromSuperview()
+                containerView.addSubview(toView!)
+                transitionContext.completeTransition(true)
             })
         } else {
             self.cardView.isHidden = true
@@ -69,14 +69,14 @@ public class CustomFlipTransition: NSObject,UIViewControllerAnimatedTransitionin
                 content.frame = CGRect.init(x: fromView!.frame.origin.x, y: fromView!.frame.origin.y, width: self.originalCardFrame.width, height: self.originalCardFrame.height)
                 self.cardView.frame = CGRect.init(x: 0, y: self.originalCardFrame.origin.y, width: self.originalCardFrame.width, height: self.originalCardFrame.height)
                 self.blurView.alpha = 0.0
-
-                }, completion: { (finish) in
-                    self.blurView.removeFromSuperview()
-                    content.backgroundColor = originalCrolor
-                    content.removeFromSuperview()
-                    self.cardView.addSubview(content)
-                    self.cardView.isHidden = false
-                    transitionContext.completeTransition(true)
+                
+            }, completion: { (finish) in
+                self.blurView.removeFromSuperview()
+                content.backgroundColor = originalCrolor
+                content.removeFromSuperview()
+                self.cardView.addSubview(content)
+                self.cardView.isHidden = false
+                transitionContext.completeTransition(true)
             })
         }
     }
